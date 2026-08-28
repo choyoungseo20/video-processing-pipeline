@@ -1,0 +1,9 @@
+.git
+.gradle
+build
+.idea
+.DS_Store
+*.md
+Dockerfile
+docker-compose*.yaml
+docker-compose*.yml

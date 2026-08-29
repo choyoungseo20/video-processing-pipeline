@@ -1,5 +1,6 @@
 package com.example.videopipeline.domain.video.controller;
 
+import com.example.videopipeline.domain.video.dto.ArtifactUrlResponse;
 import com.example.videopipeline.domain.video.dto.VideoStatusResponse;
 import com.example.videopipeline.domain.video.dto.VideoUploadResponse;
 import com.example.videopipeline.domain.video.facade.VideoFacade;
@@ -31,5 +32,15 @@ public class VideoController {
     @GetMapping("/{videoId}")
     public CommonResponse<VideoStatusResponse> getStatus(@PathVariable Long videoId) {
         return CommonResponse.onSuccess(videoService.getStatus(videoId));
+    }
+
+    @GetMapping("/{videoId}/thumbnail-url")
+    public CommonResponse<ArtifactUrlResponse> getThumbnailUrl(@PathVariable Long videoId) {
+        return CommonResponse.onSuccess(videoFacade.thumbnailUrl(videoId));
+    }
+
+    @GetMapping(value = "/{videoId}/playlist.m3u8", produces = "application/vnd.apple.mpegurl")
+    public String getHlsPlaylist(@PathVariable Long videoId) {
+        return videoFacade.hlsPlaylist(videoId);
     }
 }

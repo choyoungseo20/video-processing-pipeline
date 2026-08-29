@@ -44,9 +44,13 @@ public class VideoService {
 
     @Transactional(readOnly = true)
     public String getFilePath(Long videoId) {
+        return getVideo(videoId).getFilePath();
+    }
+
+    @Transactional(readOnly = true)
+    public Video getVideo(Long videoId) {
         return videoRepository.findById(videoId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.VIDEO_NOT_FOUND))
-                .getFilePath();
+                .orElseThrow(() -> new GeneralException(ErrorStatus.VIDEO_NOT_FOUND));
     }
 
     @Transactional

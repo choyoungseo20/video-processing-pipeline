@@ -16,7 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Slf4j
 @Component
@@ -24,6 +26,7 @@ import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 public class S3FileStorage {
 
     private final S3Client s3;
+    private final S3Presigner presigner;
     private final StorageProperties props;
 
     @PostConstruct
@@ -86,6 +89,27 @@ public class S3FileStorage {
             Files.deleteIfExists(target);
         } catch (IOException e) {
             log.warn("부분 파일 삭제 실패: {}", target, e);
+        }
+    }
+
+    public String presignGet(String key) {
+        GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(props.bucket())
+                .key(key)
+                .build();
+        return presigner.presignGetObject(b -> b
+                        .signatureDuration(props.presignTtl())
+                        .getObjectRequest(request))
+                .url()
+                .toString();
+    }
+
+    public String readUtf8(String key) {
+        try {
+            return s3.getObjectAsBytes(b -> b.bucket(props.bucket()).key(key)).asUtf8String();
+        } catch (SdkException e) {
+            log.warn("파일 조회 실패: key={}", key, e);
+            throw new GeneralException(ErrorStatus.STORAGE_READ_FAILURE, e);
         }
     }
 

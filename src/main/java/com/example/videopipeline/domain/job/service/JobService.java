@@ -34,7 +34,6 @@ public class JobService {
                 .forEach(jobRepository::save);
     }
 
-    // 반환된 시도 번호는 결과 기록 시 fencing 토큰으로 쓰인다
     @Transactional
     public int markStarted(Long jobId) {
         ProcessingJob job = jobRepository.findWithLockById(jobId)
@@ -71,7 +70,6 @@ public class JobService {
         return recoverable;
     }
 
-    // 잠금 조회 — 상태·attemptCount 검사와 갱신이 같은 잠금 아래 원자적으로 수행되게 한다
     private ProcessingJob findJob(Long jobId) {
         return jobRepository.findWithLockById(jobId)
                 .orElseThrow(() -> new IllegalStateException(JOB_NOT_FOUND_MESSAGE.formatted(jobId)));

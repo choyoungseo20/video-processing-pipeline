@@ -47,7 +47,6 @@ public class JobWorker {
         record(job, () -> jobService.markSucceeded(job.getId(), attempt));
     }
 
-    // 처리 실패와 달리 기록 거부(좀비 판정 후 만료된 시도)는 fence가 의도한 동작이라 경고로만 남긴다
     private void record(ProcessingJob job, Runnable recording) {
         try {
             recording.run();

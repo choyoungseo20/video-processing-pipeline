@@ -51,7 +51,6 @@ public class ThumbnailProcessor implements JobProcessor {
         }
     }
 
-    // 오프셋보다 짧은 영상은 프레임이 안 나오므로 첫 프레임으로 재시도
     private void extractFrame(Path input, Path output) {
         try {
             runFfmpeg(input, output, CAPTURE_OFFSET_SECONDS);
@@ -81,7 +80,6 @@ public class ThumbnailProcessor implements JobProcessor {
 
     private Path createOutputFile() {
         try {
-            // .jpg 확장자로 ffmpeg이 이미지 포맷을 결정한다
             return Files.createTempFile("thumbnail-", ".jpg");
         } catch (IOException e) {
             throw new IllegalStateException("썸네일 임시 파일 생성 실패", e);

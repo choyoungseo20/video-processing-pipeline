@@ -64,8 +64,6 @@ public class TranscodingProcessor implements JobProcessor {
                 .setVideoCodec("libx264")
                 .setAudioCodec("aac")
                 .setVideoFilter(SCALE_FILTER)
-                // HLS muxer는 키프레임에서만 자르므로, 4초 간격 키프레임을 강제하고
-                // 씬 전환 감지가 끼워 넣는 키프레임을 꺼서 세그먼트 길이를 일정하게 만든다
                 .addExtraArgs("-force_key_frames", "expr:gte(t,n_forced*" + SEGMENT_SECONDS + ")")
                 .addExtraArgs("-sc_threshold", "0")
                 .setHlsTime(SEGMENT_SECONDS, TimeUnit.SECONDS)

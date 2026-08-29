@@ -8,6 +8,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
@@ -20,12 +21,12 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(
         name = "processing_job",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"video_id", "type"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"video_id", "type"}),
+        indexes = @Index(name = "idx_processing_job_status", columnList = "status"))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProcessingJob extends BaseEntity {
 
-    // 총 시도 상한 — 마지막 허용 시도(3회째)가 실패하면 EXHAUSTED
     private static final int MAX_ATTEMPT_COUNT = 3;
 
     private static final String INVALID_TRANSITION_MESSAGE = "허용되지 않은 상태 전이: job=%d, %s에서 전이 불가";
@@ -87,7 +88,7 @@ public class ProcessingJob extends BaseEntity {
         this.finishedAt = LocalDateTime.now();
     }
 
-    // 실패한 job(FAILED / EXHAUSTED)을 사람이 수동으로 되살릴 때 사용한다
+    // 실패한 job(FAILED / EXHAUSTED)을 사람이 수동으로 되살릴 때 사용
     public void resetForManualRetry() {
         ensureStatusIn(JobStatus.EXHAUSTED, JobStatus.FAILED);
         this.status = JobStatus.PENDING;

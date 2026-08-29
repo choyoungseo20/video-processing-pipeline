@@ -24,11 +24,15 @@ public class JobWorker {
                 .collect(Collectors.toMap(JobProcessor::supportedType, Function.identity()));
     }
 
-    // job 하나 = 스레드 하나. 실패는 예외 전파가 아니라 상태 기록으로 처리한다
     @Async
     public void execute(ProcessingJob job) {
         try {
             jobService.markStarted(job.getId());
+        } catch (IllegalStateException e) {
+            log.info("실행 가능 상태가 아니라 건너뜀: jobId={}, type={}", job.getId(), job.getType());
+            return;
+        }
+        try {
             processors.get(job.getType()).process(job.getVideoId());
             jobService.markSucceeded(job.getId());
         } catch (Exception e) {

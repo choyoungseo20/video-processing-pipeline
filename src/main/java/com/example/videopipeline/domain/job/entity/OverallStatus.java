@@ -2,7 +2,6 @@ package com.example.videopipeline.domain.job.entity;
 
 import java.util.List;
 
-// job 전체를 묶어 본 처리 상태 — DB 컬럼이 아니라 조회 시점에 파생한다
 public enum OverallStatus {
     PROCESSING,
     COMPLETED,

@@ -11,7 +11,11 @@ public enum ErrorStatus implements ErrorCode {
     _INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON500", "서버 에러, 관리자에게 문의 바랍니다."),
     _BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON400", "잘못된 요청입니다."),
     _UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON401", "인증이 필요합니다."),
-    _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다.");
+    _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
+
+    VIDEO_EMPTY_FILE(HttpStatus.BAD_REQUEST, "VIDEO4001", "업로드할 영상 파일이 비어 있습니다."),
+
+    STORAGE_SAVE_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "STORAGE5001", "파일 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -204,6 +204,8 @@
     const el = id => document.getElementById(id);
     let pollTimer = null;
     let hls = null;
+    // 재업로드 시 증가 — 이전 업로드의 늦은 응답이 현재 화면을 덮지 않게 하는 토큰
+    let session = 0;
 
     el('upload-btn').addEventListener('click', upload);
 
@@ -230,9 +232,11 @@
     }
 
     function startPolling(videoId) {
+        const current = session;
         pollTimer = setInterval(async () => {
             try {
                 const body = await request(`/videos/${videoId}`);
+                if (current !== session) return;
                 render(body.result);
                 if (body.result.overallStatus !== 'PROCESSING') {
                     clearInterval(pollTimer);
@@ -241,6 +245,7 @@
                     }
                 }
             } catch (e) {
+                if (current !== session) return;
                 clearInterval(pollTimer);
                 el('metadata').textContent = e.message;
             }
@@ -260,7 +265,7 @@
                     <td>${job.type}</td>
                     <td><span class="badge ${job.status}">${job.status}</span></td>
                     <td>${job.attemptCount}회</td>
-                    <td>${job.lastFailureReason ?? '-'}</td>
+                    <td>${job.lastFailureReason == null ? '-' : escapeHtml(job.lastFailureReason)}</td>
                 </tr>`)
             .join('');
 
@@ -270,14 +275,22 @@
     }
 
     async function showResult(videoId) {
+        const current = session;
         el('result-section').classList.remove('disabled');
         try {
             const body = await request(`/videos/${videoId}/thumbnail-url`);
+            if (current !== session) return;
             el('thumbnail').src = body.result.url;
             play(`/videos/${videoId}/playlist.m3u8`);
         } catch (e) {
+            if (current !== session) return;
             el('result-error').textContent = e.message;
         }
+    }
+
+    function escapeHtml(text) {
+        return text.replace(/[&<>"']/g,
+            ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
 
     function play(playlistUrl) {
@@ -303,6 +316,7 @@
     }
 
     function reset() {
+        session++;
         if (pollTimer) clearInterval(pollTimer);
         if (hls) { hls.destroy(); hls = null; }
         el('upload-info').textContent = '';

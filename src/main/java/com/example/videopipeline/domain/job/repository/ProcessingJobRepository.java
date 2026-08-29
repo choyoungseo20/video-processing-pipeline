@@ -20,5 +20,6 @@ public interface ProcessingJobRepository extends JpaRepository<ProcessingJob, Lo
 
     List<ProcessingJob> findByStatusAndCreatedAtBefore(JobStatus status, LocalDateTime threshold);
 
-    List<ProcessingJob> findByStatusAndStartedAtBefore(JobStatus status, LocalDateTime threshold);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<ProcessingJob> findWithLockByStatusAndStartedAtBefore(JobStatus status, LocalDateTime threshold);
 }

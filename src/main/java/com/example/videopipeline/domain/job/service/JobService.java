@@ -53,11 +53,11 @@ public class JobService {
         findJob(jobId).fail(reason, attempt);
     }
 
-    // 폴러 전용
+    // 폴러 전용 — 잠금 조회로 최신 상태를 읽어, 뒤늦게 커밋되는 결과 기록과의 경합을 차단한다
     @Transactional
     public List<ProcessingJob> failTimedOut(LocalDateTime startedBefore) {
         List<ProcessingJob> zombies =
-                jobRepository.findByStatusAndStartedAtBefore(JobStatus.RUNNING, startedBefore);
+                jobRepository.findWithLockByStatusAndStartedAtBefore(JobStatus.RUNNING, startedBefore);
         zombies.forEach(job -> job.fail(TIMED_OUT_FAILURE_REASON, job.getAttemptCount()));
         return zombies;
     }
@@ -71,8 +71,9 @@ public class JobService {
         return recoverable;
     }
 
+    // 잠금 조회 — 상태·attemptCount 검사와 갱신이 같은 잠금 아래 원자적으로 수행되게 한다
     private ProcessingJob findJob(Long jobId) {
-        return jobRepository.findById(jobId)
+        return jobRepository.findWithLockById(jobId)
                 .orElseThrow(() -> new IllegalStateException(JOB_NOT_FOUND_MESSAGE.formatted(jobId)));
     }
 }

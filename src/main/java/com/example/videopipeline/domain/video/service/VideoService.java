@@ -1,10 +1,16 @@
 package com.example.videopipeline.domain.video.service;
 
+import com.example.videopipeline.domain.job.entity.OverallStatus;
+import com.example.videopipeline.domain.job.entity.ProcessingJob;
 import com.example.videopipeline.domain.job.service.JobService;
+import com.example.videopipeline.domain.video.dto.VideoStatusResponse;
 import com.example.videopipeline.domain.video.dto.VideoUploadResponse;
 import com.example.videopipeline.domain.video.entity.Video;
 import com.example.videopipeline.domain.video.event.VideoUploaded;
 import com.example.videopipeline.domain.video.repository.VideoRepository;
+import com.example.videopipeline.global.apipayload.ErrorStatus;
+import com.example.videopipeline.global.exception.GeneralException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -33,5 +39,13 @@ public class VideoService {
         eventPublisher.publishEvent(VideoUploaded.of(video));
 
         return VideoUploadResponse.from(video);
+    }
+
+    @Transactional(readOnly = true)
+    public VideoStatusResponse getStatus(Long videoId) {
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.VIDEO_NOT_FOUND));
+        List<ProcessingJob> jobs = jobService.findAllFor(videoId);
+        return VideoStatusResponse.of(video, jobs, OverallStatus.from(jobs));
     }
 }

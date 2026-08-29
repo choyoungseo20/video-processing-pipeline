@@ -47,13 +47,27 @@ public class S3FileStorage {
     }
 
     public Path downloadToTemp(String key) {
+        Path target;
         try {
-            Path target = Files.createTempFile("video-original-", null);
+            target = Files.createTempFile("video-original-", null);
             Files.delete(target);
+        } catch (IOException e) {
+            throw new IllegalStateException("임시 파일 생성 실패: key=" + key, e);
+        }
+        try {
             s3.getObject(b -> b.bucket(props.bucket()).key(key), target);
             return target;
-        } catch (IOException | SdkException e) {
+        } catch (SdkException e) {
+            deletePartialFile(target);
             throw new IllegalStateException("원본 다운로드 실패: key=" + key, e);
+        }
+    }
+
+    private void deletePartialFile(Path target) {
+        try {
+            Files.deleteIfExists(target);
+        } catch (IOException e) {
+            log.warn("부분 파일 삭제 실패: {}", target, e);
         }
     }
 

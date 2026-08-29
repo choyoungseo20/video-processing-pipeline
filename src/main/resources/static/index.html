@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Processing Pipeline</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.13"></script>
+    <style>
+        :root {
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --text: #1f2937;
+            --text-sub: #6b7280;
+            --border: #e5e7eb;
+            --bg: #f4f6f9;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+            color: var(--text);
+            background: var(--bg);
+        }
+        h1 {
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            margin: 0 0 4px;
+        }
+        .subtitle {
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            margin: 0 0 28px;
+        }
+        section {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 22px 24px;
+            margin-bottom: 18px;
+            box-shadow: 0 1px 3px rgba(16, 24, 40, 0.05);
+            transition: opacity 0.25s;
+        }
+        section h2 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1rem;
+            margin: 0 0 16px;
+        }
+        .step {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        section.disabled { opacity: 0.4; pointer-events: none; }
+        .upload-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        input[type="file"] {
+            flex: 1;
+            min-width: 220px;
+            font-size: 0.9rem;
+            color: var(--text-sub);
+        }
+        input[type="file"]::file-selector-button {
+            padding: 8px 14px;
+            margin-right: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #fff;
+            color: var(--text);
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        input[type="file"]::file-selector-button:hover { background: #f3f4f6; }
+        button {
+            padding: 9px 22px;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.05s;
+        }
+        button:hover { background: var(--accent-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            text-align: left;
+            padding: 9px 10px;
+            font-size: 0.88rem;
+        }
+        th {
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-bottom: 1px solid var(--border);
+        }
+        td { border-bottom: 1px solid #f1f3f5; }
+        tr:last-child td { border-bottom: none; }
+        .badge {
+            display: inline-block;
+            padding: 3px 11px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 600;
+        }
+        .badge.PENDING { background: #f1f3f5; color: #6b7280; }
+        .badge.RUNNING, .badge.PROCESSING { background: #dbeafe; color: #1d4ed8; }
+        .badge.SUCCEEDED, .badge.COMPLETED { background: #dcfce7; color: #15803d; }
+        .badge.FAILED, .badge.EXHAUSTED { background: #fee2e2; color: #b91c1c; }
+        .overall { margin-left: auto; }
+        .meta { color: var(--text-sub); font-size: 0.88rem; margin-top: 10px; }
+        .error { color: #b91c1c; font-size: 0.88rem; margin-top: 10px; white-space: pre-wrap; }
+        .result-grid {
+            display: flex;
+            gap: 18px;
+            flex-wrap: wrap;
+        }
+        .result-grid figure { margin: 0; flex: 1 1 300px; }
+        .result-grid figcaption {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 8px;
+        }
+        img, video {
+            width: 100%;
+            border-radius: 10px;
+            background: #000;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<h1>Video Processing Pipeline</h1>
+<p class="subtitle">영상을 업로드하면 메타데이터 추출 · 썸네일 생성 · HLS 트랜스코딩이 병렬로 처리됩니다.</p>
+
+<section id="upload-section">
+    <h2><span class="step">1</span>업로드</h2>
+    <div class="upload-row">
+        <input type="file" id="file-input" accept="video/*">
+        <button id="upload-btn">업로드</button>
+    </div>
+    <div id="upload-info" class="meta"></div>
+    <div id="upload-error" class="error"></div>
+</section>
+
+<section id="status-section" class="disabled">
+    <h2><span class="step">2</span>처리 상태 <span id="overall-badge" class="badge overall"></span></h2>
+    <table>
+        <thead>
+        <tr><th>Job</th><th>상태</th><th>시도</th><th>실패 사유</th></tr>
+        </thead>
+        <tbody id="job-rows"></tbody>
+    </table>
+    <div id="metadata" class="meta"></div>
+</section>
+
+<section id="result-section" class="disabled">
+    <h2><span class="step">3</span>결과</h2>
+    <div class="result-grid">
+        <figure>
+            <figcaption>썸네일</figcaption>
+            <img id="thumbnail" alt="썸네일">
+        </figure>
+        <figure>
+            <figcaption>HLS 재생</figcaption>
+            <video id="player" controls></video>
+        </figure>
+    </div>
+    <div id="result-error" class="error"></div>
+</section>
+
+<script>
+    const JOB_TYPES = ['METADATA', 'THUMBNAIL', 'TRANSCODING'];
+    const POLL_INTERVAL_MS = 1000;
+
+    const el = id => document.getElementById(id);
+    let pollTimer = null;
+    let hls = null;
+
+    el('upload-btn').addEventListener('click', upload);
+
+    async function upload() {
+        const file = el('file-input').files[0];
+        if (!file) {
+            el('upload-error').textContent = '파일을 선택해 주세요.';
+            return;
+        }
+        reset();
+        el('upload-btn').disabled = true;
+        try {
+            const form = new FormData();
+            form.append('file', file);
+            const body = await request('/videos', { method: 'POST', body: form });
+            el('upload-info').textContent = `videoId=${body.result.videoId} · ${body.result.originalName}`;
+            el('status-section').classList.remove('disabled');
+            startPolling(body.result.videoId);
+        } catch (e) {
+            el('upload-error').textContent = e.message;
+        } finally {
+            el('upload-btn').disabled = false;
+        }
+    }
+
+    function startPolling(videoId) {
+        pollTimer = setInterval(async () => {
+            try {
+                const body = await request(`/videos/${videoId}`);
+                render(body.result);
+                if (body.result.overallStatus !== 'PROCESSING') {
+                    clearInterval(pollTimer);
+                    if (body.result.overallStatus === 'COMPLETED') {
+                        showResult(videoId);
+                    }
+                }
+            } catch (e) {
+                clearInterval(pollTimer);
+                el('metadata').textContent = e.message;
+            }
+        }, POLL_INTERVAL_MS);
+    }
+
+    function render(status) {
+        const overall = el('overall-badge');
+        overall.textContent = status.overallStatus;
+        overall.className = `badge overall ${status.overallStatus}`;
+
+        el('job-rows').innerHTML = JOB_TYPES
+            .map(type => status.jobs.find(job => job.type === type))
+            .filter(Boolean)
+            .map(job => `
+                <tr>
+                    <td>${job.type}</td>
+                    <td><span class="badge ${job.status}">${job.status}</span></td>
+                    <td>${job.attemptCount}회</td>
+                    <td>${job.lastFailureReason ?? '-'}</td>
+                </tr>`)
+            .join('');
+
+        el('metadata').textContent = status.durationSec == null ? '' :
+            `메타데이터: ${status.durationSec}s · ${status.width}×${status.height} · ` +
+            `${status.videoCodec}/${status.audioCodec ?? '무음'}`;
+    }
+
+    async function showResult(videoId) {
+        el('result-section').classList.remove('disabled');
+        try {
+            const body = await request(`/videos/${videoId}/thumbnail-url`);
+            el('thumbnail').src = body.result.url;
+            play(`/videos/${videoId}/playlist.m3u8`);
+        } catch (e) {
+            el('result-error').textContent = e.message;
+        }
+    }
+
+    function play(playlistUrl) {
+        const video = el('player');
+        if (Hls.isSupported()) {
+            hls = new Hls();
+            hls.loadSource(playlistUrl);
+            hls.attachMedia(video);
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = playlistUrl; // Safari 네이티브 HLS
+        } else {
+            el('result-error').textContent = '이 브라우저는 HLS 재생을 지원하지 않습니다.';
+        }
+    }
+
+    async function request(url, options) {
+        const response = await fetch(url, options);
+        const body = await response.json().catch(() => null);
+        if (!response.ok) {
+            throw new Error(body ? `${body.code}: ${body.message}` : `HTTP ${response.status}`);
+        }
+        return body;
+    }
+
+    function reset() {
+        if (pollTimer) clearInterval(pollTimer);
+        if (hls) { hls.destroy(); hls = null; }
+        el('upload-info').textContent = '';
+        el('upload-error').textContent = '';
+        el('metadata').textContent = '';
+        el('result-error').textContent = '';
+        el('job-rows').innerHTML = '';
+        el('overall-badge').className = 'badge overall';
+        el('overall-badge').textContent = '';
+        el('thumbnail').removeAttribute('src');
+        el('player').removeAttribute('src');
+        el('status-section').classList.add('disabled');
+        el('result-section').classList.add('disabled');
+    }
+</script>
+</body>
+</html>

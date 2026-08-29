@@ -11,6 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,7 +26,9 @@ import lombok.NoArgsConstructor;
 public class ProcessingJob extends BaseEntity {
 
     // 총 시도 상한 — 마지막 허용 시도(3회째)가 실패하면 EXHAUSTED
-    public static final int MAX_ATTEMPT_COUNT = 3;
+    private static final int MAX_ATTEMPT_COUNT = 3;
+
+    private static final String INVALID_TRANSITION_MESSAGE = "허용되지 않은 상태 전이: job=%d, %s에서 전이 불가";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -63,6 +67,7 @@ public class ProcessingJob extends BaseEntity {
     }
 
     public void start() {
+        ensureStatusIn(JobStatus.PENDING, JobStatus.FAILED);
         this.attemptCount++;
         this.status = JobStatus.RUNNING;
         this.startedAt = LocalDateTime.now();
@@ -70,20 +75,29 @@ public class ProcessingJob extends BaseEntity {
     }
 
     public void succeed() {
+        ensureStatusIn(JobStatus.RUNNING);
         this.status = JobStatus.SUCCEEDED;
         this.finishedAt = LocalDateTime.now();
     }
 
     public void fail(String reason) {
+        ensureStatusIn(JobStatus.RUNNING);
         this.status = attemptCount >= MAX_ATTEMPT_COUNT ? JobStatus.EXHAUSTED : JobStatus.FAILED;
         this.lastFailureReason = reason;
         this.finishedAt = LocalDateTime.now();
     }
 
-    // EXHAUSTED 상태에서 사람이 원인을 고친 뒤 수동으로 되살릴 때 사용한다
+    // 실패한 job(FAILED / EXHAUSTED)을 사람이 수동으로 되살릴 때 사용한다
     public void resetForManualRetry() {
+        ensureStatusIn(JobStatus.EXHAUSTED, JobStatus.FAILED);
         this.status = JobStatus.PENDING;
         this.attemptCount = 0;
         this.lastFailureReason = null;
+    }
+
+    private void ensureStatusIn(JobStatus... allowed) {
+        if (!List.of(allowed).contains(this.status)) {
+            throw new IllegalStateException(INVALID_TRANSITION_MESSAGE.formatted(id, status));
+        }
     }
 }

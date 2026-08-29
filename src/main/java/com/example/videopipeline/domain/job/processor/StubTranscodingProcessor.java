@@ -15,7 +15,7 @@ public class StubTranscodingProcessor implements JobProcessor {
     }
 
     @Override
-    public void process(Long videoId) {
+    public void process(Long videoId, String filePath) {
         log.info("[스텁] 트랜스코딩 시작: videoId={}", videoId);
         sleep(5_000);
         log.info("[스텁] 트랜스코딩 완료: videoId={}", videoId);

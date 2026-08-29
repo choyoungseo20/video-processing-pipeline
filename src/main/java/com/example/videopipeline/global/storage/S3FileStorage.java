@@ -6,6 +6,8 @@ import com.example.videopipeline.global.exception.GeneralException;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -41,6 +43,17 @@ public class S3FileStorage {
         } catch (IOException | SdkException e) {
             log.warn("파일 저장 실패: key={}", key);
             throw new GeneralException(ErrorStatus.STORAGE_SAVE_FAILURE, e);
+        }
+    }
+
+    public Path downloadToTemp(String key) {
+        try {
+            Path target = Files.createTempFile("video-original-", null);
+            Files.delete(target);
+            s3.getObject(b -> b.bucket(props.bucket()).key(key), target);
+            return target;
+        } catch (IOException | SdkException e) {
+            throw new IllegalStateException("원본 다운로드 실패: key=" + key, e);
         }
     }
 

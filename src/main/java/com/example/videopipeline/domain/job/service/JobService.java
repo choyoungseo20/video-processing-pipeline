@@ -34,21 +34,23 @@ public class JobService {
                 .forEach(jobRepository::save);
     }
 
+    // 반환된 시도 번호는 결과 기록 시 fencing 토큰으로 쓰인다
     @Transactional
-    public void markStarted(Long jobId) {
-        jobRepository.findWithLockById(jobId)
-                .orElseThrow(() -> new IllegalStateException(JOB_NOT_FOUND_MESSAGE.formatted(jobId)))
-                .start();
+    public int markStarted(Long jobId) {
+        ProcessingJob job = jobRepository.findWithLockById(jobId)
+                .orElseThrow(() -> new IllegalStateException(JOB_NOT_FOUND_MESSAGE.formatted(jobId)));
+        job.start();
+        return job.getAttemptCount();
     }
 
     @Transactional
-    public void markSucceeded(Long jobId) {
-        findJob(jobId).succeed();
+    public void markSucceeded(Long jobId, int attempt) {
+        findJob(jobId).succeed(attempt);
     }
 
     @Transactional
-    public void markFailed(Long jobId, String reason) {
-        findJob(jobId).fail(reason);
+    public void markFailed(Long jobId, String reason, int attempt) {
+        findJob(jobId).fail(reason, attempt);
     }
 
     // 폴러 전용
@@ -56,7 +58,7 @@ public class JobService {
     public List<ProcessingJob> failTimedOut(LocalDateTime startedBefore) {
         List<ProcessingJob> zombies =
                 jobRepository.findByStatusAndStartedAtBefore(JobStatus.RUNNING, startedBefore);
-        zombies.forEach(job -> job.fail(TIMED_OUT_FAILURE_REASON));
+        zombies.forEach(job -> job.fail(TIMED_OUT_FAILURE_REASON, job.getAttemptCount()));
         return zombies;
     }
 

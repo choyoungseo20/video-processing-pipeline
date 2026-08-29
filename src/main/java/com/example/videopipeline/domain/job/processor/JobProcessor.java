@@ -6,5 +6,5 @@ public interface JobProcessor {
 
     JobType supportedType();
 
-    void process(Long videoId);
+    void process(Long videoId, String filePath);
 }

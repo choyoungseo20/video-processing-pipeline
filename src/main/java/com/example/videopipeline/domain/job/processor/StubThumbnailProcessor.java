@@ -15,7 +15,7 @@ public class StubThumbnailProcessor implements JobProcessor {
     }
 
     @Override
-    public void process(Long videoId) {
+    public void process(Long videoId, String filePath) {
         log.info("[스텁] 썸네일 생성 시작: videoId={}", videoId);
         sleep(2_000);
         log.info("[스텁] 썸네일 생성 완료: videoId={}", videoId);

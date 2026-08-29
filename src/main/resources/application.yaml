@@ -27,6 +27,8 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  ffmpeg:
+    ffprobe-path: ffprobe
   recovery:
     poll-interval: 60s
     pending-stale-after: 60s

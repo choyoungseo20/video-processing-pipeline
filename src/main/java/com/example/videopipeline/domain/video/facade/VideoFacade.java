@@ -28,7 +28,13 @@ public class VideoFacade {
         String key = originalKey();
         s3FileStorage.save(file, key);
 
-        return videoService.register(file.getOriginalFilename(), file.getSize(), key);
+        try {
+            return videoService.register(file.getOriginalFilename(), file.getSize(), key);
+        } catch (RuntimeException e) {
+            // DB 등록 실패 시 방금 올린 객체를 보상 삭제해 대용량 고아 파일 누적을 막는다
+            s3FileStorage.deleteQuietly(key);
+            throw e;
+        }
     }
 
     private void validate(MultipartFile file) {

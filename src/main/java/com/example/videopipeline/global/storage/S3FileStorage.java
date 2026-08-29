@@ -43,4 +43,13 @@ public class S3FileStorage {
             throw new GeneralException(ErrorStatus.STORAGE_SAVE_FAILURE, e);
         }
     }
+
+    // 보상 삭제용 — 삭제 실패가 원래 예외를 덮지 않도록 로그만 남기고 삼킨다
+    public void deleteQuietly(String key) {
+        try {
+            s3.deleteObject(b -> b.bucket(props.bucket()).key(key));
+        } catch (SdkException e) {
+            log.warn("보상 삭제 실패 (고아 객체로 남음): key={}", key, e);
+        }
+    }
 }

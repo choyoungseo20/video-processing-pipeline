@@ -3,7 +3,6 @@ package com.example.videopipeline.domain.video.controller;
 import com.example.videopipeline.domain.video.dto.VideoUploadResponse;
 import com.example.videopipeline.domain.video.facade.VideoFacade;
 import com.example.videopipeline.global.apipayload.CommonResponse;
-import com.example.videopipeline.global.apipayload.SuccessStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +20,6 @@ public class VideoController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CommonResponse<VideoUploadResponse> upload(@RequestPart("file") MultipartFile file) {
-        return CommonResponse.onSuccess(SuccessStatus.CREATED, videoFacade.upload(file));
+        return CommonResponse.onSuccess(videoFacade.upload(file));
     }
 }

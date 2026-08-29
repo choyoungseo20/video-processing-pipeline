@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,15 @@ public class S3FileStorage {
             s3.putObject(b -> b.bucket(props.bucket()).key(key), RequestBody.fromFile(file));
         } catch (SdkException e) {
             throw new IllegalStateException("산출물 업로드 실패: key=" + key, e);
+        }
+    }
+
+    public void saveDirectory(Path dir, String keyPrefix) {
+        try (Stream<Path> files = Files.list(dir)) {
+            files.filter(Files::isRegularFile)
+                    .forEach(file -> saveFile(file, keyPrefix + file.getFileName()));
+        } catch (IOException e) {
+            throw new IllegalStateException("산출물 디렉터리 업로드 실패: prefix=" + keyPrefix, e);
         }
     }
 

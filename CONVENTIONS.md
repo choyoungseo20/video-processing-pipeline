@@ -32,10 +32,12 @@
 
 | 유형 | 이슈 접두사 | 브랜치 | 커밋 |
 |---|---|---|---|
-| 기능 | [FEAT] | `feat/#이슈번호-요약` | `feat: 내용` |
-| 버그 | [FIX] | `fix/#이슈번호-요약` | `fix: 내용` |
-| 리팩토링 | [REFACTOR] | `refactor/#이슈번호-요약` | `refactor: 내용` |
-| 설정/문서 | [CHORE] | `chore/#이슈번호-요약` | `chore: 내용` |
+| 기능 | [FEAT] | `feat/요약` | `feat: 내용` |
+| 버그 | [FIX] | `fix/요약` | `fix: 내용` |
+| 리팩토링 | [REFACTOR] | `refactor/요약` | `refactor: 내용` |
+| 설정/문서 | [CHORE] | `chore/요약` | `chore: 내용` |
+
+- 이슈 연결은 브랜치 이름이 아니라 PR 본문의 `Fixes #이슈번호`로 한다
 
 ## 작업 흐름
 

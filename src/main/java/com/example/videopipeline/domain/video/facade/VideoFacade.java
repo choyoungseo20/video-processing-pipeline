@@ -5,7 +5,7 @@ import com.example.videopipeline.domain.video.service.VideoService;
 import com.example.videopipeline.global.apipayload.ErrorStatus;
 import com.example.videopipeline.global.exception.GeneralException;
 import com.example.videopipeline.global.storage.S3FileStorage;
-import java.util.UUID;
+import com.example.videopipeline.global.storage.StorageKeyFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,15 +17,14 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 public class VideoFacade {
 
-    private static final String ORIGINAL_KEY_FORMAT = "videos/%s/original";
-
     private final S3FileStorage s3FileStorage;
+    private final StorageKeyFactory keyFactory;
     private final VideoService videoService;
 
     public VideoUploadResponse upload(MultipartFile file) {
         validate(file);
 
-        String key = originalKey();
+        String key = keyFactory.originalKey();
         s3FileStorage.save(file, key);
 
         try {
@@ -41,9 +40,5 @@ public class VideoFacade {
         if (file == null || file.isEmpty()) {
             throw new GeneralException(ErrorStatus.VIDEO_EMPTY_FILE);
         }
-    }
-
-    private String originalKey() {
-        return ORIGINAL_KEY_FORMAT.formatted(UUID.randomUUID());
     }
 }

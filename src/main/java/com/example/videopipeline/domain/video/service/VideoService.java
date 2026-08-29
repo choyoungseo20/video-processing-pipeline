@@ -60,6 +60,11 @@ public class VideoService {
                 metadata.audioCodec());
     }
 
+    @Transactional
+    public void applyThumbnail(Long videoId, String thumbnailPath) {
+        videoRepository.updateThumbnailPath(videoId, thumbnailPath);
+    }
+
     @Transactional(readOnly = true)
     public VideoStatusResponse getStatus(Long videoId) {
         Video video = videoRepository.findById(videoId)

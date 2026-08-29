@@ -46,6 +46,14 @@ public class S3FileStorage {
         }
     }
 
+    public void saveFile(Path file, String key) {
+        try {
+            s3.putObject(b -> b.bucket(props.bucket()).key(key), RequestBody.fromFile(file));
+        } catch (SdkException e) {
+            throw new IllegalStateException("산출물 업로드 실패: key=" + key, e);
+        }
+    }
+
     public Path downloadToTemp(String key) {
         Path target;
         try {

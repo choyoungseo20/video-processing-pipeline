@@ -24,4 +24,12 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
             Integer height,
             String videoCodec,
             String audioCodec);
+
+    @Modifying
+    @Query("""
+            update Video v
+            set v.thumbnailPath = :thumbnailPath
+            where v.id = :videoId
+            """)
+    void updateThumbnailPath(Long videoId, String thumbnailPath);
 }

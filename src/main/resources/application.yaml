@@ -29,6 +29,7 @@ springdoc:
 app:
   ffmpeg:
     ffprobe-path: ffprobe
+    ffmpeg-path: ffmpeg
   recovery:
     poll-interval: 60s
     pending-stale-after: 60s

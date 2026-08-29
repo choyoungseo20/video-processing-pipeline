@@ -44,7 +44,6 @@ public class S3FileStorage {
         }
     }
 
-    // 보상 삭제용 — 삭제 실패가 원래 예외를 덮지 않도록 로그만 남기고 삼킨다
     public void deleteQuietly(String key) {
         try {
             s3.deleteObject(b -> b.bucket(props.bucket()).key(key));

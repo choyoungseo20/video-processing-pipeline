@@ -14,7 +14,6 @@ public class VideoUploadedEventListener {
     private final ProcessingJobRepository jobRepository;
     private final JobWorker jobWorker;
 
-    // AFTER_COMMIT: 업로드 트랜잭션이 커밋된 뒤에만 실행 — job 행이 보이는 것을 보장한다
     @TransactionalEventListener
     public void handle(VideoUploaded event) {
         jobRepository.findByVideoId(event.videoId())

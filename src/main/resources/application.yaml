@@ -33,7 +33,7 @@ app:
   recovery:
     poll-interval: 60s
     pending-stale-after: 60s
-    running-timeout: 60s
+    running-timeout: 300s
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
     bucket: videopipeline

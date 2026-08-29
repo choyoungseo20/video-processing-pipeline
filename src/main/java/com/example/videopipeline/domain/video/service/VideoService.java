@@ -65,6 +65,11 @@ public class VideoService {
         videoRepository.updateThumbnailPath(videoId, thumbnailPath);
     }
 
+    @Transactional
+    public void applyPlaylist(Long videoId, String playlistPath) {
+        videoRepository.updatePlaylistPath(videoId, playlistPath);
+    }
+
     @Transactional(readOnly = true)
     public VideoStatusResponse getStatus(Long videoId) {
         Video video = videoRepository.findById(videoId)

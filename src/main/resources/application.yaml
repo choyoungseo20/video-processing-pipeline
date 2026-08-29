@@ -1,6 +1,10 @@
 spring:
   application:
     name: video-processing-pipeline
+  servlet:
+    multipart:
+      max-file-size: 1GB
+      max-request-size: 1GB
   profiles:
     active: local
   jpa:
@@ -15,3 +19,10 @@ server:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+
+app:
+  storage:
+    endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
+    bucket: videopipeline
+    access-key: ${APP_STORAGE_ACCESS_KEY:minio}
+    secret-key: ${APP_STORAGE_SECRET_KEY:localminio}

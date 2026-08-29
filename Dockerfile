@@ -9,6 +9,10 @@ RUN chmod +x gradlew && ./gradlew --no-daemon bootJar -x test
 FROM eclipse-temurin:21-jre AS runtime
 WORKDIR /app
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN useradd -r -u 1001 spring
 USER spring
 

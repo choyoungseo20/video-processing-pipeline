@@ -3,6 +3,7 @@ package com.example.videopipeline.domain.video.service;
 import com.example.videopipeline.domain.job.entity.OverallStatus;
 import com.example.videopipeline.domain.job.entity.ProcessingJob;
 import com.example.videopipeline.domain.job.service.JobService;
+import com.example.videopipeline.domain.video.dto.VideoMetadata;
 import com.example.videopipeline.domain.video.dto.VideoStatusResponse;
 import com.example.videopipeline.domain.video.dto.VideoUploadResponse;
 import com.example.videopipeline.domain.video.entity.Video;
@@ -39,6 +40,24 @@ public class VideoService {
         eventPublisher.publishEvent(VideoUploaded.of(video));
 
         return VideoUploadResponse.from(video);
+    }
+
+    @Transactional(readOnly = true)
+    public String getFilePath(Long videoId) {
+        return videoRepository.findById(videoId)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.VIDEO_NOT_FOUND))
+                .getFilePath();
+    }
+
+    @Transactional
+    public void applyMetadata(Long videoId, VideoMetadata metadata) {
+        videoRepository.updateMetadata(
+                videoId,
+                metadata.durationSec(),
+                metadata.width(),
+                metadata.height(),
+                metadata.videoCodec(),
+                metadata.audioCodec());
     }
 
     @Transactional(readOnly = true)

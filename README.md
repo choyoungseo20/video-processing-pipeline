@@ -103,6 +103,14 @@ docker compose up -d mysql
 ./gradlew bootRun --args='--spring.profiles.active=local'
 ```
 
+영상 처리(ffprobe/ffmpeg)를 로컬에서 실행하려면 FFmpeg가 필요합니다 (Docker 이미지에는 포함).
+
+```bash
+brew install ffmpeg
+```
+
+없어도 앱 부팅과 업로드는 정상 동작하며, 처리 job만 실패(FAILED)로 기록됩니다.
+
 ---
 
 ## 5. 프로파일

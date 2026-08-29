@@ -92,6 +92,8 @@ public class ProcessingJob extends BaseEntity {
         ensureStatusIn(JobStatus.EXHAUSTED, JobStatus.FAILED);
         this.status = JobStatus.PENDING;
         this.attemptCount = 0;
+        this.startedAt = null;
+        this.finishedAt = null;
         this.lastFailureReason = null;
     }
 

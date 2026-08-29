@@ -37,7 +37,8 @@ app:
   storage:
     endpoint: ${APP_STORAGE_ENDPOINT:http://localhost:9000}
     presign-endpoint: ${APP_STORAGE_PRESIGN_ENDPOINT:}
-    presign-ttl: 10m
+    # 플레이리스트 발급 시점에 모든 세그먼트 URL이 고정되므로, VOD 최대 재생 시간보다 길어야 한다
+    presign-ttl: 4h
     bucket: videopipeline
     access-key: ${APP_STORAGE_ACCESS_KEY:minio}
     secret-key: ${APP_STORAGE_SECRET_KEY:localminio}

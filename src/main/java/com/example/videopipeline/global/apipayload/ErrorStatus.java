@@ -14,6 +14,7 @@ public enum ErrorStatus implements ErrorCode {
     _FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON403", "금지된 요청입니다."),
 
     VIDEO_EMPTY_FILE(HttpStatus.BAD_REQUEST, "VIDEO4001", "업로드할 영상 파일이 비어 있습니다."),
+    VIDEO_NOT_FOUND(HttpStatus.NOT_FOUND, "VIDEO4002", "존재하지 않는 영상입니다."),
 
     STORAGE_SAVE_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "STORAGE5001", "파일 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
 

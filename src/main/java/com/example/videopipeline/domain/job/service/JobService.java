@@ -4,6 +4,7 @@ import com.example.videopipeline.domain.job.entity.JobType;
 import com.example.videopipeline.domain.job.entity.ProcessingJob;
 import com.example.videopipeline.domain.job.repository.ProcessingJobRepository;
 import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class JobService {
 
     private final ProcessingJobRepository jobRepository;
+
+    @Transactional(readOnly = true)
+    public List<ProcessingJob> findAllFor(Long videoId) {
+        return jobRepository.findByVideoId(videoId);
+    }
 
     // 업로드 트랜잭션에 합류(REQUIRED)해 video 저장과 원자적으로 묶인다
     @Transactional

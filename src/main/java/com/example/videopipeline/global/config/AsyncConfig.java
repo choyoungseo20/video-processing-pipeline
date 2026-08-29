@@ -16,7 +16,7 @@ public class AsyncConfig {
     public ThreadPoolTaskExecutor applicationTaskExecutor(ThreadPoolTaskExecutorBuilder builder) {
         ThreadPoolTaskExecutor executor = builder.build();
         executor.setRejectedExecutionHandler((task, pool) ->
-                log.warn("실행 큐 포화로 job 제출 거부 — PENDING으로 남겨 폴러 복구에 맡긴다"));
+                log.warn("실행 큐 포화로 job 제출 거부 — 제출 전 상태(PENDING/FAILED) 그대로 남아 폴러가 다음 주기에 회수한다"));
         return executor;
     }
 }

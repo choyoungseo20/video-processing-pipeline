@@ -4,6 +4,8 @@ import com.example.videopipeline.domain.job.entity.JobStatus;
 import com.example.videopipeline.domain.job.entity.JobType;
 import com.example.videopipeline.domain.job.entity.ProcessingJob;
 import com.example.videopipeline.domain.job.repository.ProcessingJobRepository;
+import com.example.videopipeline.global.apipayload.ErrorStatus;
+import com.example.videopipeline.global.exception.GeneralException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +54,18 @@ public class JobService {
         findJob(jobId).fail(reason, attempt);
     }
 
-    // 폴러 전용 — 잠금 조회로 최신 상태를 읽어, 뒤늦게 커밋되는 결과 기록과의 경합을 차단한다
+    @Transactional
+    public ProcessingJob resetForRetry(Long videoId, JobType type) {
+        ProcessingJob job = jobRepository.findWithLockByVideoIdAndType(videoId, type)
+                .orElseThrow(() -> new GeneralException(ErrorStatus.JOB_NOT_FOUND));
+        if (!job.isRetryable()) {
+            throw new GeneralException(ErrorStatus.JOB_NOT_RETRYABLE);
+        }
+        job.resetForManualRetry();
+        return job;
+    }
+
+    // 폴러 전용
     @Transactional
     public List<ProcessingJob> failTimedOut(LocalDateTime startedBefore) {
         List<ProcessingJob> zombies =

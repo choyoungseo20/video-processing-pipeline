@@ -92,11 +92,13 @@ public class ProcessingJob extends BaseEntity {
         this.finishedAt = LocalDateTime.now();
     }
 
-    // 실패한 job(FAILED / EXHAUSTED)을 사람이 수동으로 되살릴 때 사용
+    public boolean isRetryable() {
+        return status == JobStatus.FAILED || status == JobStatus.EXHAUSTED;
+    }
+
     public void resetForManualRetry() {
         ensureStatusIn(JobStatus.EXHAUSTED, JobStatus.FAILED);
         this.status = JobStatus.PENDING;
-        this.attemptCount = 0;
         this.startedAt = null;
         this.finishedAt = null;
         this.lastFailureReason = null;

@@ -17,6 +17,9 @@ public enum ErrorStatus implements ErrorCode {
     VIDEO_NOT_FOUND(HttpStatus.NOT_FOUND, "VIDEO4002", "존재하지 않는 영상입니다."),
     VIDEO_ARTIFACT_NOT_READY(HttpStatus.CONFLICT, "VIDEO4003", "산출물이 아직 준비되지 않았습니다. 처리 상태를 확인해 주세요."),
 
+    JOB_NOT_FOUND(HttpStatus.NOT_FOUND, "JOB4001", "존재하지 않는 처리 작업입니다."),
+    JOB_NOT_RETRYABLE(HttpStatus.CONFLICT, "JOB4002", "실패 상태의 작업만 재시도할 수 있습니다."),
+
     STORAGE_SAVE_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "STORAGE5001", "파일 저장에 실패했습니다. 잠시 후 다시 시도해 주세요."),
     STORAGE_READ_FAILURE(HttpStatus.SERVICE_UNAVAILABLE, "STORAGE5002", "파일 조회에 실패했습니다. 잠시 후 다시 시도해 주세요.");
 

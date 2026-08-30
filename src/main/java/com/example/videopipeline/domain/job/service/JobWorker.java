@@ -43,13 +43,13 @@ public class JobWorker {
             processors.get(job.getType()).process(job.getVideoId(), filePath);
         } catch (Exception e) {
             log.error("job 실행 실패: jobId={}, type={}", job.getId(), job.getType(), e);
-            record(job, () -> jobService.markFailed(job.getId(), e.getMessage(), attempt));
+            String reason = e.getMessage() != null ? e.getMessage() : e.toString();
+            record(job, () -> jobService.markFailed(job.getId(), reason, attempt));
             return;
         }
         record(job, () -> jobService.markSucceeded(job.getId(), attempt));
     }
 
-    // 둘 다 좀비 판정 후 만료된 시도의 의도된 거부 — 그 외 예외는 잡지 않고 드러낸다
     private void record(ProcessingJob job, Runnable recording) {
         try {
             recording.run();

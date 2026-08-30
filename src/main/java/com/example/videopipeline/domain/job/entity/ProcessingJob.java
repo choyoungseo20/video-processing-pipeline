@@ -1,5 +1,7 @@
 package com.example.videopipeline.domain.job.entity;
 
+import com.example.videopipeline.domain.job.exception.InvalidJobTransitionException;
+import com.example.videopipeline.domain.job.exception.StaleJobAttemptException;
 import com.example.videopipeline.global.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,10 +30,6 @@ import lombok.NoArgsConstructor;
 public class ProcessingJob extends BaseEntity {
 
     private static final int MAX_ATTEMPT_COUNT = 3;
-
-    private static final String INVALID_TRANSITION_MESSAGE = "허용되지 않은 상태 전이: job=%d, %s에서 전이 불가";
-
-    private static final String STALE_ATTEMPT_MESSAGE = "만료된 시도의 기록 거부: job=%d, 시도 %d ≠ 현재 %d";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -104,17 +102,15 @@ public class ProcessingJob extends BaseEntity {
         this.lastFailureReason = null;
     }
 
-    // fencing — 좀비로 판정돼 재실행된 job에 옛 시도가 뒤늦게 결과를 쓰는 것을 막는다
     private void ensureCurrentAttempt(int expectedAttempt) {
         if (this.attemptCount != expectedAttempt) {
-            throw new IllegalStateException(
-                    STALE_ATTEMPT_MESSAGE.formatted(id, expectedAttempt, attemptCount));
+            throw new StaleJobAttemptException(id, expectedAttempt, attemptCount);
         }
     }
 
     private void ensureStatusIn(JobStatus... allowed) {
         if (!List.of(allowed).contains(this.status)) {
-            throw new IllegalStateException(INVALID_TRANSITION_MESSAGE.formatted(id, status));
+            throw new InvalidJobTransitionException(id, status);
         }
     }
 }

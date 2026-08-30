@@ -8,9 +8,8 @@ import com.example.videopipeline.domain.video.dto.VideoStatusResponse;
 import com.example.videopipeline.domain.video.dto.VideoUploadResponse;
 import com.example.videopipeline.domain.video.entity.Video;
 import com.example.videopipeline.domain.video.event.VideoUploaded;
+import com.example.videopipeline.domain.video.exception.VideoNotFoundException;
 import com.example.videopipeline.domain.video.repository.VideoRepository;
-import com.example.videopipeline.global.apipayload.ErrorStatus;
-import com.example.videopipeline.global.exception.GeneralException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,7 +49,7 @@ public class VideoService {
     @Transactional(readOnly = true)
     public Video getVideo(Long videoId) {
         return videoRepository.findById(videoId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.VIDEO_NOT_FOUND));
+                .orElseThrow(() -> new VideoNotFoundException(videoId));
     }
 
     @Transactional
@@ -76,8 +75,7 @@ public class VideoService {
 
     @Transactional(readOnly = true)
     public VideoStatusResponse getStatus(Long videoId) {
-        Video video = videoRepository.findById(videoId)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.VIDEO_NOT_FOUND));
+        Video video = getVideo(videoId);
         List<ProcessingJob> jobs = jobService.findAllFor(videoId);
         return VideoStatusResponse.of(video, jobs, OverallStatus.from(jobs));
     }

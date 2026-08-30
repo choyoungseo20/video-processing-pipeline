@@ -3,9 +3,9 @@ package com.example.videopipeline.domain.job.service;
 import com.example.videopipeline.domain.job.entity.JobStatus;
 import com.example.videopipeline.domain.job.entity.JobType;
 import com.example.videopipeline.domain.job.entity.ProcessingJob;
+import com.example.videopipeline.domain.job.exception.JobNotFoundException;
+import com.example.videopipeline.domain.job.exception.JobNotRetryableException;
 import com.example.videopipeline.domain.job.repository.ProcessingJobRepository;
-import com.example.videopipeline.global.apipayload.ErrorStatus;
-import com.example.videopipeline.global.exception.GeneralException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class JobService {
 
-    private static final String JOB_NOT_FOUND_MESSAGE = "존재하지 않는 job: %d";
     private static final String TIMED_OUT_FAILURE_REASON = "실행 타임아웃 초과 — 서버 중단으로 유실된 시도로 판정";
 
     private final ProcessingJobRepository jobRepository;
@@ -38,8 +37,7 @@ public class JobService {
 
     @Transactional
     public int markStarted(Long jobId) {
-        ProcessingJob job = jobRepository.findWithLockById(jobId)
-                .orElseThrow(() -> new IllegalStateException(JOB_NOT_FOUND_MESSAGE.formatted(jobId)));
+        ProcessingJob job = findJob(jobId);
         job.start();
         return job.getAttemptCount();
     }
@@ -57,9 +55,9 @@ public class JobService {
     @Transactional
     public ProcessingJob resetForRetry(Long videoId, JobType type) {
         ProcessingJob job = jobRepository.findWithLockByVideoIdAndType(videoId, type)
-                .orElseThrow(() -> new GeneralException(ErrorStatus.JOB_NOT_FOUND));
+                .orElseThrow(() -> new JobNotFoundException(videoId, type));
         if (!job.isRetryable()) {
-            throw new GeneralException(ErrorStatus.JOB_NOT_RETRYABLE);
+            throw new JobNotRetryableException(job.getId(), job.getStatus());
         }
         job.resetForManualRetry();
         return job;
@@ -85,6 +83,6 @@ public class JobService {
 
     private ProcessingJob findJob(Long jobId) {
         return jobRepository.findWithLockById(jobId)
-                .orElseThrow(() -> new IllegalStateException(JOB_NOT_FOUND_MESSAGE.formatted(jobId)));
+                .orElseThrow(() -> new JobNotFoundException(jobId));
     }
 }

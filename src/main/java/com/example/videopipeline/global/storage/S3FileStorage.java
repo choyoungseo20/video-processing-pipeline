@@ -45,8 +45,7 @@ public class S3FileStorage {
                     RequestBody.fromInputStream(in, file.getSize()));
             return key;
         } catch (IOException | SdkException e) {
-            log.warn("파일 저장 실패: key={}", key);
-            throw new GeneralException(ErrorStatus.STORAGE_SAVE_FAILURE, e);
+            throw new GeneralException(ErrorStatus.STORAGE_SAVE_FAILURE, "파일 저장 실패: key=" + key, e);
         }
     }
 
@@ -108,8 +107,7 @@ public class S3FileStorage {
         try {
             return s3.getObjectAsBytes(b -> b.bucket(props.bucket()).key(key)).asUtf8String();
         } catch (SdkException e) {
-            log.warn("파일 조회 실패: key={}", key, e);
-            throw new GeneralException(ErrorStatus.STORAGE_READ_FAILURE, e);
+            throw new GeneralException(ErrorStatus.STORAGE_READ_FAILURE, "파일 조회 실패: key=" + key, e);
         }
     }
 

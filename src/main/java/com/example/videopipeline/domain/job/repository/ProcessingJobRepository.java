@@ -1,6 +1,7 @@
 package com.example.videopipeline.domain.job.repository;
 
 import com.example.videopipeline.domain.job.entity.JobStatus;
+import com.example.videopipeline.domain.job.entity.JobType;
 import com.example.videopipeline.domain.job.entity.ProcessingJob;
 import jakarta.persistence.LockModeType;
 import java.time.LocalDateTime;
@@ -15,6 +16,9 @@ public interface ProcessingJobRepository extends JpaRepository<ProcessingJob, Lo
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<ProcessingJob> findWithLockById(Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<ProcessingJob> findWithLockByVideoIdAndType(Long videoId, JobType type);
 
     List<ProcessingJob> findByStatus(JobStatus status);
 

@@ -135,6 +135,12 @@
         .badge.SUCCEEDED, .badge.COMPLETED { background: #dcfce7; color: #15803d; }
         .badge.FAILED, .badge.EXHAUSTED { background: #fee2e2; color: #b91c1c; }
         .overall { margin-left: auto; }
+        .retry-btn {
+            padding: 3px 12px;
+            font-size: 0.76rem;
+            border-radius: 6px;
+            margin-left: 8px;
+        }
         .meta { color: var(--text-sub); font-size: 0.88rem; margin-top: 10px; }
         .error { color: #b91c1c; font-size: 0.88rem; margin-top: 10px; white-space: pre-wrap; }
         .result-grid {
@@ -204,10 +210,25 @@
     const el = id => document.getElementById(id);
     let pollTimer = null;
     let hls = null;
+    let currentVideoId = null;
+    let polling = false;
     // 재업로드 시 증가 — 이전 업로드의 늦은 응답이 현재 화면을 덮지 않게 하는 토큰
     let session = 0;
 
     el('upload-btn').addEventListener('click', upload);
+
+    el('job-rows').addEventListener('click', async e => {
+        const btn = e.target.closest('.retry-btn');
+        if (!btn) return;
+        btn.disabled = true;
+        try {
+            await request(`/videos/${currentVideoId}/jobs/${btn.dataset.type}/retry`, { method: 'POST' });
+            if (!polling) startPolling(currentVideoId);
+        } catch (err) {
+            el('metadata').textContent = err.message;
+            btn.disabled = false;
+        }
+    });
 
     async function upload() {
         const file = el('file-input').files[0];
@@ -223,7 +244,8 @@
             const body = await request('/videos', { method: 'POST', body: form });
             el('upload-info').textContent = `videoId=${body.result.videoId} · ${body.result.originalName}`;
             el('status-section').classList.remove('disabled');
-            startPolling(body.result.videoId);
+            currentVideoId = body.result.videoId;
+            startPolling(currentVideoId);
         } catch (e) {
             el('upload-error').textContent = e.message;
         } finally {
@@ -234,6 +256,7 @@
     // setTimeout 체이닝 — 응답을 받은 뒤에만 다음 조회를 예약해 요청 중첩·응답 역전을 차단
     function startPolling(videoId) {
         const current = session;
+        polling = true;
         const poll = async () => {
             try {
                 const body = await request(`/videos/${videoId}`);
@@ -241,11 +264,15 @@
                 render(body.result);
                 if (body.result.overallStatus === 'PROCESSING') {
                     pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
-                } else if (body.result.overallStatus === 'COMPLETED') {
-                    showResult(videoId);
+                } else {
+                    polling = false;
+                    if (body.result.overallStatus === 'COMPLETED') {
+                        showResult(videoId);
+                    }
                 }
             } catch (e) {
                 if (current !== session) return;
+                polling = false;
                 el('metadata').textContent = e.message;
             }
         };
@@ -265,7 +292,9 @@
                     <td>${job.type}</td>
                     <td><span class="badge ${job.status}">${job.status}</span></td>
                     <td>${job.attemptCount}회</td>
-                    <td>${job.lastFailureReason == null ? '-' : escapeHtml(job.lastFailureReason)}</td>
+                    <td>${job.lastFailureReason == null ? '-' : escapeHtml(job.lastFailureReason)}${
+                        ['FAILED', 'EXHAUSTED'].includes(job.status)
+                            ? `<button class="retry-btn" data-type="${job.type}">재시도</button>` : ''}</td>
                 </tr>`)
             .join('');
 
@@ -317,6 +346,8 @@
 
     function reset() {
         session++;
+        polling = false;
+        currentVideoId = null;
         if (pollTimer) clearTimeout(pollTimer);
         if (hls) { hls.destroy(); hls = null; }
         el('upload-info').textContent = '';

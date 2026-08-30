@@ -231,25 +231,25 @@
         }
     }
 
+    // setTimeout 체이닝 — 응답을 받은 뒤에만 다음 조회를 예약해 요청 중첩·응답 역전을 차단
     function startPolling(videoId) {
         const current = session;
-        pollTimer = setInterval(async () => {
+        const poll = async () => {
             try {
                 const body = await request(`/videos/${videoId}`);
                 if (current !== session) return;
                 render(body.result);
-                if (body.result.overallStatus !== 'PROCESSING') {
-                    clearInterval(pollTimer);
-                    if (body.result.overallStatus === 'COMPLETED') {
-                        showResult(videoId);
-                    }
+                if (body.result.overallStatus === 'PROCESSING') {
+                    pollTimer = setTimeout(poll, POLL_INTERVAL_MS);
+                } else if (body.result.overallStatus === 'COMPLETED') {
+                    showResult(videoId);
                 }
             } catch (e) {
                 if (current !== session) return;
-                clearInterval(pollTimer);
                 el('metadata').textContent = e.message;
             }
-        }, POLL_INTERVAL_MS);
+        };
+        poll();
     }
 
     function render(status) {
@@ -317,7 +317,7 @@
 
     function reset() {
         session++;
-        if (pollTimer) clearInterval(pollTimer);
+        if (pollTimer) clearTimeout(pollTimer);
         if (hls) { hls.destroy(); hls = null; }
         el('upload-info').textContent = '';
         el('upload-error').textContent = '';

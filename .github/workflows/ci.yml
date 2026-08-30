@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: JDK 21 설치
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Gradle 설정 (캐시 포함)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: ffmpeg 설치
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+
+      # 테스트는 local 프로파일로 실행되므로 그 기본값(root/localroot, minio/localminio)에 맞춘다
+      - name: 테스트 인프라 기동 (MySQL, MinIO)
+        run: |
+          cat > .env <<EOF
+          MYSQL_DATABASE=videopipeline
+          MYSQL_USER=videopipeline
+          MYSQL_PASSWORD=ci-only
+          MYSQL_ROOT_PASSWORD=localroot
+          MINIO_ROOT_USER=minio
+          MINIO_ROOT_PASSWORD=localminio
+          EOF
+          docker compose up -d --wait mysql minio
+
+      - name: 빌드 및 테스트
+        run: ./gradlew build
+
+      - name: 테스트 리포트 업로드
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: build/reports/tests/test

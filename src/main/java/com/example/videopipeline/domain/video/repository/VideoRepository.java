@@ -4,6 +4,7 @@ import com.example.videopipeline.domain.video.entity.Video;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface VideoRepository extends JpaRepository<Video, Long> {
 
@@ -18,12 +19,12 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
             where v.id = :videoId
             """)
     void updateMetadata(
-            Long videoId,
-            Double durationSec,
-            Integer width,
-            Integer height,
-            String videoCodec,
-            String audioCodec);
+            @Param("videoId") Long videoId,
+            @Param("durationSec") Double durationSec,
+            @Param("width") Integer width,
+            @Param("height") Integer height,
+            @Param("videoCodec") String videoCodec,
+            @Param("audioCodec") String audioCodec);
 
     @Modifying
     @Query("""
@@ -31,7 +32,7 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
             set v.thumbnailPath = :thumbnailPath
             where v.id = :videoId
             """)
-    void updateThumbnailPath(Long videoId, String thumbnailPath);
+    void updateThumbnailPath(@Param("videoId") Long videoId, @Param("thumbnailPath") String thumbnailPath);
 
     @Modifying
     @Query("""
@@ -39,5 +40,5 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
             set v.playlistPath = :playlistPath
             where v.id = :videoId
             """)
-    void updatePlaylistPath(Long videoId, String playlistPath);
+    void updatePlaylistPath(@Param("videoId") Long videoId, @Param("playlistPath") String playlistPath);
 }

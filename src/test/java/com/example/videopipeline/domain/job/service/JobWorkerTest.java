@@ -92,6 +92,7 @@ class JobWorkerTest {
                 .given(jobService).markSucceeded(any(), anyInt());
 
         assertThatCode(() -> worker.execute(job)).doesNotThrowAnyException();
+        verify(jobService).markSucceeded(job.getId(), 1);
     }
 
     @Test
@@ -103,5 +104,6 @@ class JobWorkerTest {
                 .given(jobService).markFailed(any(), any(), anyInt());
 
         assertThatCode(() -> worker.execute(job)).doesNotThrowAnyException();
+        verify(jobService).markFailed(job.getId(), "처리 실패", 1);
     }
 }
